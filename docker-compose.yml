@@ -1,0 +1,125 @@
+services:
+
+  # Servicio de inicialización para configurar permisos del tablespace
+  init-tablespace:
+    image: alpine:latest
+    container_name: init-tablespace
+    user: root
+    volumes:
+      - keycloak-db-data:{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}:rw
+    command: >
+      sh -c "
+        echo 'Configurando permisos del directorio del tablespace...' &&
+        mkdir -p {{ DB_KEYCLOAK_TABLESPACE_LOCATION }} &&
+        chown -R 999:999 {{ DB_KEYCLOAK_TABLESPACE_LOCATION }} &&
+        chmod 700 {{ DB_KEYCLOAK_TABLESPACE_LOCATION }} &&
+        echo 'Permisos configurados correctamente' &&
+        ls -ld {{ DB_KEYCLOAK_TABLESPACE_LOCATION }} &&
+        echo 'Inicialización completada exitosamente' &&
+        exit 0
+      "
+    restart: "no"
+    networks:
+      - app-network
+
+  db:
+    container_name: app-db
+    image: {{ APP_POSTGRES_NAME }}:{{ APP_POSTGRES_VERSION }}
+    restart: unless-stopped
+    depends_on:
+      init-tablespace:
+        condition: service_completed_successfully
+    volumes:
+      - app-db-data:/var/lib/postgresql/data
+      - keycloak-db-data:{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}:rw
+      - ./00-init-tablespace.sh:/docker-entrypoint-initdb.d/00-init-tablespace.sh
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD={{ DB_ROOT_PASSWORD }}
+      - POSTGRES_USER={{ DB_ROOT_USER }}
+      - POSTGRES_DB={{ DB_NAME }}
+      - TZ={{ TIMEZONE }}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ DB_ROOT_USER }} -d {{ DB_NAME }}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - app-network
+
+  keycloak:
+    container_name: app-identity-manager
+    image: app-identity-manager:1.0.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: {{ KEYCLOAK_ADMIN }}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: {{ KEYCLOAK_ADMIN_PASSWORD }}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://app-db:5432/{{ DB_KEYCLOAK_NAME }}
+      KC_DB_USERNAME: {{ DB_KEYCLOAK_USER }}
+      KC_DB_PASSWORD: {{ DB_KEYCLOAK_PASSWORD }}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HEALTH_ENABLED: "true"
+      TZ: {{ TIMEZONE }}
+    ports:
+      - 8080:8080 # Puerto interno de Keycloak
+    volumes:
+      - app-identity-manager-data:/opt/keycloak/data
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.keycloak.entrypoints=websecure"
+    #   - "traefik.http.routers.keycloak.rule=Host(`sso.midominio.com`)"
+    #   - "traefik.http.routers.keycloak.service=keycloak"
+    #   - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/master/.well-known/openid-configuration"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - app-network
+
+  # traefik:
+  #   container_name: traefik
+  #   image: traefik:v2.11
+  #   restart: unless-stopped
+  #   command:
+  #     - --api.insecure=true
+  #     - --providers.docker=true
+  #     - --providers.docker.exposedbydefault=false
+  #     - --entrypoints.websecure.address=:443
+  #     - --entrypoints.web.http.tls=true
+  #     - --providers.file.directory=/etc/traefik/dynamic_configs
+  #     - --providers.file.watch=true
+  #     - --log.level=DEBUG
+  #     - --entrypoints.jenkins-jnlp.address=:50000
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #     - "8081:8080"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./traefik/dynamic_configs:/etc/traefik/dynamic_configs:ro
+  #     - ./certs:/etc/certs:ro
+  #   networks:
+  #     app-network:
+  #       aliases:
+  #         - sso.midominio.com
+
+  
+volumes:
+  app-db-data:
+  keycloak-db-data:
+  app-identity-manager-data:
+
+networks:
+  app-network:
