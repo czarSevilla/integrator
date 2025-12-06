@@ -61,8 +61,13 @@ dns
 2.3 Instalación de ansible (1h)
 3. Generación de playbook para generacion de imagenes.
 3.1 Script para generación de imagen de base de datos (2h)
-3.2 Script para generación de imagen de entity manager (2h)
+3.2 Script para generación de imagen de entity manager (12h)
 3.3 Generación de docker-compose para levantar el proyecto
+3.4 Configurar base de datos (2h)
+3.5 COnfigurar backend (2h)
+3.6 Configurar frontend (2h)
+3.7 Ejecutar en ambiente local
+3.8 Configurar keycloak (2h)
 
 
 

@@ -53,6 +53,12 @@
       ansible.builtin.debug:
         msg: "Imagen {{ POSTGRES_IMAGE_NAME }} construida. ID: {{ postgres_image_build_result.image.Id }}"
     
+    - name: Copiar tema de Keycloak
+      ansible.builtin.copy:
+        src: "{{ IDENTITY_MANAGER_THEME_SRC }}/login"
+        dest: "{{ IDENTITY_MANAGER_PATH_BUILD }}/ps-theme"
+        mode: "0644"
+    
     - name: Compilar imagen de Identity Manager
       community.docker.docker_image:
         name: "{{ IDENTITY_MANAGER_IMAGE_NAME }}"

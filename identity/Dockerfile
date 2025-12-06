@@ -8,15 +8,11 @@ RUN mkdir -p /mnt/rootfs && \
 # Stage 1: Build Keycloak with desired configurations
 FROM quay.io/keycloak/keycloak:latest as builder_stage
 
-# ENV KC_HTTP_RELATIVE_PATH="/sso"
 ENV KC_DB=postgres
 
 WORKDIR /opt/keycloak
-# RUN /opt/keycloak/bin/kc.sh build \
-#     --db=${KC_DB} \
-#     --http-relative-path=${KC_HTTP_RELATIVE_PATH} \
-#     --health-enabled=true \
-#     --metrics-enabled=true
+
+COPY ps-theme /opt/keycloak/themes/ps-theme
 
 RUN /opt/keycloak/bin/kc.sh build \
     --db=${KC_DB} \
@@ -31,14 +27,11 @@ FROM quay.io/keycloak/keycloak:latest
 COPY --from=builder_stage /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 COPY --from=ubi-micro-build /mnt/rootfs/usr/bin/curl /usr/bin/curl
 COPY --from=ubi-micro-build /mnt/rootfs/usr/lib64/* /usr/lib64/
-# COPY realm-poc.json /opt/keycloak/data/import/realm-poc.json
-# If you have custom providers or themes, copy them too.
-# COPY --from=builder_stage /opt/keycloak/providers/ /opt/keycloak/providers/
-# COPY --from=builder_stage /opt/keycloak/themes/ /opt/keycloak/themes/
+COPY realm-ps.json /opt/keycloak/data/import/realm-poc.json
+COPY --from=builder_stage /opt/keycloak/themes/ /opt/keycloak/themes/
 
 # Set runtime environment variables.
 ENV KC_DB=postgres
-# ENV KC_HTTP_RELATIVE_PATH=/sso
 ENV KC_HTTP_ENABLED=true
 ENV KC_HOSTNAME=https://sso.cesarsevilla.live
 ENV KC_HOSTNAME_STRICT=false
@@ -49,13 +42,8 @@ ENV KC_METRICS_ENABLED=true
 
 # Define the entrypoint to start Keycloak in optimized mode
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-# CMD ["start", "--optimized", "--hostname-strict=false", \
-#     "--hostname=https://local.cesarsevilla.live/sso",  \
-#     "--proxy-headers=forwarded",  \
-#     "--http-enabled=true", \
-#     "--import-realm"]
 
 CMD ["start", "--optimized", "--hostname-strict=false", \
      "--hostname=https://sso.cesarsevilla.live",  \
      "--proxy-headers=forwarded",  \
-     "--http-enabled=true"]
+     "--http-enabled=true", "--import-realm"]
