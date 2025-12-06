@@ -24,11 +24,65 @@
         dest: "{{ DIST_PATH }}/01-init-tablespace.sh"
         mode: "0755"
 
-    - name: Parametrizar init-db.sql
+    - name: Parametrizar 02-init-db.sql
       ansible.builtin.template:
         src: "{{ DB_POSTGRES_PATH_BUILD }}/init-db.sql"
-        dest: "{{ DIST_PATH }}/init-db.sql"
+        dest: "{{ DIST_PATH }}/02-init-db.sql"
         mode: "0644"
+    
+    - name: Parametrizar 03-init-db.sql
+      ansible.builtin.template:
+        src: "{{ DB_INIT_DB_SQL_PATH }}/050_ddl_catalogos.sql"
+        dest: "{{ DIST_PATH }}/03-init-db.sql"
+        mode: "0644"
+    
+    - name: Parametrizar 04-init-db.sql
+      ansible.builtin.template:
+        src: "{{ DB_INIT_DB_SQL_PATH }}/051_data_catalogos.sql"
+        dest: "{{ DIST_PATH }}/04-init-db.sql"
+        mode: "0644"
+    
+    - name: Parametrizar 05-init-db.sql
+      ansible.builtin.template:
+        src: "{{ DB_INIT_DB_SQL_PATH }}/060_ddl_clientes.sql"
+        dest: "{{ DIST_PATH }}/05-init-db.sql"
+        mode: "0644"
+    
+    - name: Parametrizar 06-init-db.sql
+      ansible.builtin.template:
+        src: "{{ DB_INIT_DB_SQL_PATH }}/070_ddl_dispositivos_tec.sql"
+        dest: "{{ DIST_PATH }}/06-init-db.sql"
+        mode: "0644"
+    
+    - name: Agregar instrucción \c al principio de 03-init-db.sql
+      ansible.builtin.lineinfile:
+        path: "{{ DIST_PATH }}/03-init-db.sql"
+        line: "\\c {{ DB_APP_NAME }}"
+        insertbefore: BOF
+
+    - name: Agregar instrucción \c al principio de 04-init-db.sql
+      ansible.builtin.lineinfile:
+        path: "{{ DIST_PATH }}/04-init-db.sql"
+        line: "\\c {{ DB_APP_NAME }}"
+        insertbefore: BOF
+        
+    - name: Agregar instrucción \c al principio de 05-init-db.sql
+      ansible.builtin.lineinfile:
+        path: "{{ DIST_PATH }}/05-init-db.sql"
+        line: "\\c {{ DB_APP_NAME }}"
+        insertbefore: BOF
+
+    - name: Agregar instrucción \c al principio de 06-init-db.sql
+      ansible.builtin.lineinfile:
+        path: "{{ DIST_PATH }}/05-init-db.sql"
+        line: "\\c {{ DB_APP_NAME }}"
+        insertbefore: BOF
+        
+    - name: Agregar instrucción \c al principio de 06-init-db.sql
+      ansible.builtin.lineinfile:
+        path: "{{ DIST_PATH }}/06-init-db.sql"
+        line: "\\c {{ DB_APP_NAME }}"
+        insertbefore: BOF
 
     - name: Parametrizar docker-compose.yml
       ansible.builtin.template:

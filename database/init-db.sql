@@ -15,6 +15,9 @@
 -- Define el nombre de la nueva base de datos
 \set db_name '{{ DB_KEYCLOAK_NAME }}'
 
+-- Define el root de la base de datos
+\set root_user '{{ DB_ROOT_USER }}'
+
 -- ---------------------------------------------------
 -- 2. CREACIÓN DEL TABLESPACE
 -- ---------------------------------------------------
@@ -22,7 +25,7 @@
 -- Crea el TABLESPACE con la ubicación especificada.
 -- ¡IMPORTANTE! El directorio debe existir y tener permisos adecuados.
 CREATE TABLESPACE :tablespace_name
-OWNER postgres -- Se le asigna el superusuario o un administrador como dueño inicial
+OWNER :root_user -- Se le asigna el superusuario o un administrador como dueño inicial
 LOCATION :'tablespace_location';
 
 -- ---------------------------------------------------
@@ -112,6 +115,9 @@ GRANT CONNECT ON DATABASE :db_name TO :user_name;
 -- Define el nombre de la nueva base de datos
 \set db_name '{{ DB_APP_NAME }}'
 
+-- Define el root de la base de datos
+\set root_user '{{ DB_ROOT_USER }}'
+
 -- ---------------------------------------------------
 -- 2. CREACIÓN DEL TABLESPACE
 -- ---------------------------------------------------
@@ -119,7 +125,7 @@ GRANT CONNECT ON DATABASE :db_name TO :user_name;
 -- Crea el TABLESPACE con la ubicación especificada.
 -- ¡IMPORTANTE! El directorio debe existir y tener permisos adecuados.
 CREATE TABLESPACE :tablespace_name
-OWNER postgres -- Se le asigna el superusuario o un administrador como dueño inicial
+OWNER :root_user -- Se le asigna el superusuario o un administrador como dueño inicial
 LOCATION :'tablespace_location';
 
 -- ---------------------------------------------------
@@ -159,12 +165,18 @@ CREATE DATABASE :db_name
   LC_CTYPE = 'es_MX.UTF-8'
   CONNECTION LIMIT = -1;
 
+
 -- ---------------------------------------------------
 -- 5. ASIGNAR PERMISOS AL DUEÑO (Para crear objetos)
 -- ---------------------------------------------------
 
 -- Conéctate a la nueva base de datos para modificar sus permisos
 \c :db_name
+
+CREATE SCHEMA general AUTHORIZATION :user_name;
+GRANT ALL ON SCHEMA general TO :user_name;
+GRANT CREATE ON SCHEMA general TO :user_name;
+GRANT CONNECT ON DATABASE :db_name TO :user_name;
 
 -- El dueño de la BD ya tiene todos los privilegios, pero es buena práctica
 -- asegurarle permisos explícitos en el esquema 'public'.
@@ -174,10 +186,14 @@ CREATE DATABASE :db_name
 -- Esto es una buena práctica de seguridad (se hace en la mayoría de las instalaciones).
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
--- GRANT otorga el permiso CREATE explícitamente al nuevo usuario.
-GRANT ALL ON SCHEMA public TO :user_name;
-GRANT CREATE ON SCHEMA public TO :user_name;
-GRANT CONNECT ON DATABASE :db_name TO :user_name;
+CREATE ROLE readwrite;
+GRANT CONNECT ON DATABASE :db_name TO readwrite;
+GRANT USAGE ON SCHEMA general TO readwrite;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA general TO readwrite;
+ALTER DEFAULT PRIVILEGES IN SCHEMA general GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO readwrite;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA general TO readwrite;
+
+GRANT readwrite TO :user_name;
 
 -- ---------------------------------------------------
 -- 6. VERIFICACIÓN (Opcional)

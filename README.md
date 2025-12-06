@@ -68,6 +68,7 @@ dns
 3.6 Configurar frontend (2h)
 3.7 Ejecutar en ambiente local
 3.8 Configurar keycloak (2h)
+3.9 Tuning creacion database (8h)
 
 
 
@@ -102,4 +103,6 @@ https://certbot.eff.org/instructions?ws=nginx&os=pip
 
 
 
-    
+Para agregar nuevos scripts de inicializacion de base de datos
+1. Agregar el script en el playbook.yml
+2. Agregar el script en el docker-compose.yml en la definicion del servicio db

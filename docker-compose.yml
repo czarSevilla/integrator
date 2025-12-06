@@ -42,7 +42,11 @@ services:
       - app-db-data:{{ DB_APP_TABLESPACE_LOCATION }}:rw
       - ./00-init-tablespace.sh:/docker-entrypoint-initdb.d/00-init-tablespace.sh
       - ./01-init-tablespace.sh:/docker-entrypoint-initdb.d/01-init-tablespace.sh
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./02-init-db.sql:/docker-entrypoint-initdb.d/02-init-db.sql
+      - ./03-init-db.sql:/docker-entrypoint-initdb.d/03-init-db.sql
+      - ./04-init-db.sql:/docker-entrypoint-initdb.d/04-init-db.sql
+      - ./05-init-db.sql:/docker-entrypoint-initdb.d/05-init-db.sql
+      - ./06-init-db.sql:/docker-entrypoint-initdb.d/06-init-db.sql
     ports:
       - 5432:5432
     environment:
