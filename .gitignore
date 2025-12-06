@@ -1,3 +1,5 @@
 .vscode/
 lab1/
 venv/
+dist/
+certs/

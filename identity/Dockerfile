@@ -40,11 +40,10 @@ COPY --from=ubi-micro-build /mnt/rootfs/usr/lib64/* /usr/lib64/
 ENV KC_DB=postgres
 # ENV KC_HTTP_RELATIVE_PATH=/sso
 ENV KC_HTTP_ENABLED=true
-# ENV KC_HOSTNAME=https://local.cesarsevilla.live/sso
-# ENV KC_HOSTNAME_STRICT=false
-# ENV KC_PROXY=edge
-# ENV KC_PROXY_HEADERS=forwarded
-# ENV KC_SERVER_SERVLET_PATH=/sso
+ENV KC_HOSTNAME=https://sso.cesarsevilla.live
+ENV KC_HOSTNAME_STRICT=false
+ENV KC_PROXY=edge
+ENV KC_PROXY_HEADERS=forwarded
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
 
@@ -56,4 +55,7 @@ ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 #     "--http-enabled=true", \
 #     "--import-realm"]
 
-CMD ["start", "--optimized", "--hostname-strict=false", "--http-enabled=true"]
+CMD ["start", "--optimized", "--hostname-strict=false", \
+     "--hostname=https://sso.cesarsevilla.live",  \
+     "--proxy-headers=forwarded",  \
+     "--http-enabled=true"]
