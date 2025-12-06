@@ -88,3 +88,24 @@ Ansible 2.20.0 o superior
 ```bash
 ansible-playbook playbook.yml -e @vars_produccion.yml
 ```
+
+
+Generar certificados con certbot
+
+https://certbot.eff.org/instructions?ws=nginx&os=pip
+
+
+
+- name: Compilar imagen de Identity Manager
+      community.docker.docker_image:
+        name: "{{ APP_IDENTITY_MANAGER_NAME }}:{{ APP_IDENTITY_MANAGER_VERSION }}"
+        build:
+          path: "{{ IDENTITY_MANAGER_PATH_BUILD }}"
+        source: build
+        state: present
+      register: image_build_result
+    
+    - name: Verificar el resultado de la compilación
+      ansible.builtin.debug:
+        msg: "Imagen {{ APP_IDENTITY_MANAGER_NAME }}:{{ APP_IDENTITY_MANAGER_VERSION }} construida. ID: {{ image_build_result.image.Id }}"
+    

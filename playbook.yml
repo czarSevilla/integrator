@@ -12,43 +12,29 @@
         state: directory
         mode: "0755"
 
-    - name: Parametrizar script de inicialización del tablespace
+    - name: Parametrizar script de inicialización del tablespace de keycloak
       ansible.builtin.template:
         src: "{{ DB_POSTGRES_PATH_BUILD }}/00-init-tablespace.sh"
         dest: "{{ DIST_PATH }}/00-init-tablespace.sh"
         mode: "0755"
-        attributes:
-          DB_KEYCLOAK_TABLESPACE_LOCATION: "{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}"
+    
+    - name: Parametrizar script de inicialización del tablespace de app
+      ansible.builtin.template:
+        src: "{{ DB_POSTGRES_PATH_BUILD }}/01-init-tablespace.sh"
+        dest: "{{ DIST_PATH }}/01-init-tablespace.sh"
+        mode: "0755"
 
     - name: Parametrizar init-db.sql
       ansible.builtin.template:
         src: "{{ DB_POSTGRES_PATH_BUILD }}/init-db.sql"
         dest: "{{ DIST_PATH }}/init-db.sql"
         mode: "0644"
-        attributes:
-          DB_KEYCLOAK_TABLESPACE_LOCATION: "{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}"
-          DB_KEYCLOAK_USER: "{{ DB_KEYCLOAK_USER }}"
-          DB_KEYCLOAK_PASSWORD: "{{ DB_KEYCLOAK_PASSWORD }}"
-          DB_KEYCLOAK_NAME: "{{ DB_KEYCLOAK_NAME }}"
 
     - name: Parametrizar docker-compose.yml
       ansible.builtin.template:
         src: "docker-compose.yml"
         dest: "{{ DIST_PATH }}/docker-compose.yml"
         mode: "0644"
-        attributes:
-          DB_KEYCLOAK_TABLESPACE_LOCATION: "{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}"
-          DB_ROOT_PASSWORD: "{{ DB_ROOT_PASSWORD }}"
-          DB_ROOT_USER: "{{ DB_ROOT_USER }}"
-          DB_NAME: "{{ DB_NAME }}"
-          TIMEZONE: "{{ TIMEZONE }}"
-          APP_POSTGRES_NAME: "{{ APP_POSTGRES_NAME }}"
-          APP_POSTGRES_VERSION: "{{ APP_POSTGRES_VERSION }}"
-          KEYCLOAK_ADMIN: "{{ KEYCLOAK_ADMIN }}"
-          KEYCLOAK_ADMIN_PASSWORD: "{{ KEYCLOAK_ADMIN_PASSWORD }}"
-          DB_KEYCLOAK_USER: "{{ DB_KEYCLOAK_USER }}"
-          DB_KEYCLOAK_PASSWORD: "{{ DB_KEYCLOAK_PASSWORD }}"
-          DB_KEYCLOAK_NAME: "{{ DB_KEYCLOAK_NAME }}"
     
     - name: Verificar que los archivos de inicialización estén presentes
       ansible.builtin.debug:
@@ -56,7 +42,7 @@
     
     - name: Compilar imagen de PostgreSQL con locales
       community.docker.docker_image:
-        name: "{{ APP_POSTGRES_NAME }}:{{ APP_POSTGRES_VERSION }}"
+        name: "{{ POSTGRES_IMAGE_NAME }}"
         build:
           path: "{{ DB_POSTGRES_PATH_BUILD }}"
         source: build
@@ -65,18 +51,6 @@
     
     - name: Verificar el resultado de la compilación de PostgreSQL
       ansible.builtin.debug:
-        msg: "Imagen {{ APP_POSTGRES_NAME }}:{{ APP_POSTGRES_VERSION }} construida. ID: {{ postgres_image_build_result.image.Id }}"
+        msg: "Imagen {{ POSTGRES_IMAGE_NAME }} construida. ID: {{ postgres_image_build_result.image.Id }}"
     
-    - name: Compilar imagen de Identity Manager
-      community.docker.docker_image:
-        name: "{{ APP_IDENTITY_MANAGER_NAME }}:{{ APP_IDENTITY_MANAGER_VERSION }}"
-        build:
-          path: "{{ IDENTITY_MANAGER_PATH_BUILD }}"
-        source: build
-        state: present
-      register: image_build_result
-    
-    - name: Verificar el resultado de la compilación
-      ansible.builtin.debug:
-        msg: "Imagen {{ APP_IDENTITY_MANAGER_NAME }}:{{ APP_IDENTITY_MANAGER_VERSION }} construida. ID: {{ image_build_result.image.Id }}"
     

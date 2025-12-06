@@ -7,6 +7,7 @@ services:
     user: root
     volumes:
       - keycloak-db-data:{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}:rw
+      - app-db-data:{{ DB_APP_TABLESPACE_LOCATION }}:rw
     command: >
       sh -c "
         echo 'Configurando permisos del directorio del tablespace...' &&
@@ -16,6 +17,12 @@ services:
         echo 'Permisos configurados correctamente' &&
         ls -ld {{ DB_KEYCLOAK_TABLESPACE_LOCATION }} &&
         echo 'Inicialización completada exitosamente' &&
+        mkdir -p {{ DB_APP_TABLESPACE_LOCATION }} &&
+        chown -R 999:999 {{ DB_APP_TABLESPACE_LOCATION }} &&
+        chmod 700 {{ DB_APP_TABLESPACE_LOCATION }} &&
+        echo 'Permisos configurados correctamente' &&
+        ls -ld {{ DB_APP_TABLESPACE_LOCATION }} &&
+        echo 'Inicialización completada exitosamente' &&
         exit 0
       "
     restart: "no"
@@ -24,15 +31,17 @@ services:
 
   db:
     container_name: app-db
-    image: {{ APP_POSTGRES_NAME }}:{{ APP_POSTGRES_VERSION }}
+    image: {{ POSTGRES_IMAGE_NAME }}
     restart: unless-stopped
     depends_on:
       init-tablespace:
         condition: service_completed_successfully
     volumes:
-      - app-db-data:/var/lib/postgresql/data
+      - psql-db-data:/var/lib/postgresql/data
       - keycloak-db-data:{{ DB_KEYCLOAK_TABLESPACE_LOCATION }}:rw
+      - app-db-data:{{ DB_APP_TABLESPACE_LOCATION }}:rw
       - ./00-init-tablespace.sh:/docker-entrypoint-initdb.d/00-init-tablespace.sh
+      - ./01-init-tablespace.sh:/docker-entrypoint-initdb.d/01-init-tablespace.sh
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - 5432:5432
@@ -50,43 +59,43 @@ services:
     networks:
       - app-network
 
-  keycloak:
-    container_name: app-identity-manager
-    image: app-identity-manager:1.0.0
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: {{ KEYCLOAK_ADMIN }}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: {{ KEYCLOAK_ADMIN_PASSWORD }}
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://app-db:5432/{{ DB_KEYCLOAK_NAME }}
-      KC_DB_USERNAME: {{ DB_KEYCLOAK_USER }}
-      KC_DB_PASSWORD: {{ DB_KEYCLOAK_PASSWORD }}
-      KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
-      KC_HEALTH_ENABLED: "true"
-      TZ: {{ TIMEZONE }}
-    ports:
-      - 8080:8080 # Puerto interno de Keycloak
-    volumes:
-      - app-identity-manager-data:/opt/keycloak/data
+  # keycloak:
+  #   container_name: app-identity-manager
+  #   image: app-identity-manager:1.0.0
+  #   restart: unless-stopped
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   environment:
+  #     KC_BOOTSTRAP_ADMIN_USERNAME: {{ KEYCLOAK_ADMIN }}
+  #     KC_BOOTSTRAP_ADMIN_PASSWORD: {{ KEYCLOAK_ADMIN_PASSWORD }}
+  #     KC_DB: postgres
+  #     KC_DB_URL: jdbc:postgresql://app-db:5432/{{ DB_KEYCLOAK_NAME }}
+  #     KC_DB_USERNAME: {{ DB_KEYCLOAK_USER }}
+  #     KC_DB_PASSWORD: {{ DB_KEYCLOAK_PASSWORD }}
+  #     KC_HTTP_ENABLED: "true"
+  #     KC_HOSTNAME_STRICT: "false"
+  #     KC_HOSTNAME_STRICT_HTTPS: "false"
+  #     KC_HEALTH_ENABLED: "true"
+  #     TZ: {{ TIMEZONE }}
+  #   ports:
+  #     - 8080:8080 # Puerto interno de Keycloak
+    # volumes:
+    #   - app-identity-manager-data:/opt/keycloak/data
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.http.routers.keycloak.entrypoints=websecure"
     #   - "traefik.http.routers.keycloak.rule=Host(`sso.midominio.com`)"
     #   - "traefik.http.routers.keycloak.service=keycloak"
     #   - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/master/.well-known/openid-configuration"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
-    networks:
-      - app-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/realms/master/.well-known/openid-configuration"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 120s
+    # networks:
+    #   - app-network
 
   # traefik:
   #   container_name: traefik
@@ -117,9 +126,10 @@ services:
 
   
 volumes:
+  psql-db-data:
   app-db-data:
   keycloak-db-data:
-  app-identity-manager-data:
+  # app-identity-manager-data:
 
 networks:
   app-network:
