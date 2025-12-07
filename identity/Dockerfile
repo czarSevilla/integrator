@@ -23,6 +23,8 @@ RUN /opt/keycloak/bin/kc.sh build \
 # No 'AS' needed for the final stage, or give it a distinct name like 'final_image'
 FROM quay.io/keycloak/keycloak:latest 
 
+ARG KEYCLOAK_URL
+
 # Copy the built artifacts from the 'builder_stage'
 COPY --from=builder_stage /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 COPY --from=ubi-micro-build /mnt/rootfs/usr/bin/curl /usr/bin/curl
@@ -33,7 +35,7 @@ COPY --from=builder_stage /opt/keycloak/themes/ /opt/keycloak/themes/
 # Set runtime environment variables.
 ENV KC_DB=postgres
 ENV KC_HTTP_ENABLED=true
-ENV KC_HOSTNAME=https://sso.cesarsevilla.live
+ENV KC_HOSTNAME=${KEYCLOAK_URL}
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_PROXY=edge
 ENV KC_PROXY_HEADERS=forwarded
@@ -44,6 +46,6 @@ ENV KC_METRICS_ENABLED=true
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 
 CMD ["start", "--optimized", "--hostname-strict=false", \
-     "--hostname=https://sso.cesarsevilla.live",  \
+     "--hostname=${KEYCLOAK_URL}",  \
      "--proxy-headers=forwarded",  \
      "--http-enabled=true", "--import-realm"]

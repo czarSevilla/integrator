@@ -122,11 +122,57 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dynamic_configs:/etc/traefik/dynamic_configs:ro
       - ./certs:/etc/certs:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/rawdata"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       app-network:
         aliases:
           - sso.cesarsevilla.live
-
+  
+  ansible-01-new-admin:
+    container_name: ansible-01-new-admin
+    image: {{ ANSIBLE_RUNNER_IMAGE_NAME }}
+    command: ansible-playbook /ansible/playbooks/01-new-admin.yml -i /ansible/playbooks/inventory.ini -e @/ansible/playbooks/vars.yml
+    volumes: 
+      - ./playbooks:/ansible/playbooks
+    networks:
+      - app-network
+    restart: "no"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      traefik:
+        condition: service_healthy
+  
+  ansible-02-delete-default-admin:
+    container_name: ansible-02-delete-default-admin
+    image: {{ ANSIBLE_RUNNER_IMAGE_NAME }}
+    command: ansible-playbook /ansible/playbooks/02-delete-default-admin.yml -i /ansible/playbooks/inventory.ini -e @/ansible/playbooks/vars.yml
+    volumes: 
+      - ./playbooks:/ansible/playbooks
+    networks:
+      - app-network
+    restart: "no"
+    depends_on:
+      ansible-01-new-admin:
+        condition: service_completed_successfully
+  
+  ansible-03-app-user:
+    container_name: ansible-03-app-user
+    image: {{ ANSIBLE_RUNNER_IMAGE_NAME }}
+    command: ansible-playbook /ansible/playbooks/03-app-user.yml -i /ansible/playbooks/inventory.ini -e @/ansible/playbooks/vars.yml
+    volumes: 
+      - ./playbooks:/ansible/playbooks
+    networks:
+      - app-network
+    restart: "no"
+    depends_on:
+      ansible-02-delete-default-admin:
+        condition: service_completed_successfully
   
 volumes:
   psql-db-data:

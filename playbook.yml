@@ -12,13 +12,13 @@
         state: directory
         mode: "0755"
 
-    - name: Parametrizar script de inicialización del tablespace de keycloak
+    - name: Parametrizar script de inicializacion del tablespace de keycloak
       ansible.builtin.template:
         src: "{{ DB_POSTGRES_PATH_BUILD }}/00-init-tablespace.sh"
         dest: "{{ DIST_PATH }}/00-init-tablespace.sh"
         mode: "0755"
     
-    - name: Parametrizar script de inicialización del tablespace de app
+    - name: Parametrizar script de inicializacion del tablespace de app
       ansible.builtin.template:
         src: "{{ DB_POSTGRES_PATH_BUILD }}/01-init-tablespace.sh"
         dest: "{{ DIST_PATH }}/01-init-tablespace.sh"
@@ -54,31 +54,31 @@
         dest: "{{ DIST_PATH }}/06-init-db.sql"
         mode: "0644"
     
-    - name: Agregar instrucción \c al principio de 03-init-db.sql
+    - name: Agregar instruccion \c al principio de 03-init-db.sql
       ansible.builtin.lineinfile:
         path: "{{ DIST_PATH }}/03-init-db.sql"
         line: "\\c {{ DB_APP_NAME }}"
         insertbefore: BOF
 
-    - name: Agregar instrucción \c al principio de 04-init-db.sql
+    - name: Agregar instruccion \c al principio de 04-init-db.sql
       ansible.builtin.lineinfile:
         path: "{{ DIST_PATH }}/04-init-db.sql"
         line: "\\c {{ DB_APP_NAME }}"
         insertbefore: BOF
         
-    - name: Agregar instrucción \c al principio de 05-init-db.sql
+    - name: Agregar instruccion \c al principio de 05-init-db.sql
       ansible.builtin.lineinfile:
         path: "{{ DIST_PATH }}/05-init-db.sql"
         line: "\\c {{ DB_APP_NAME }}"
         insertbefore: BOF
 
-    - name: Agregar instrucción \c al principio de 06-init-db.sql
+    - name: Agregar instruccion \c al principio de 06-init-db.sql
       ansible.builtin.lineinfile:
         path: "{{ DIST_PATH }}/05-init-db.sql"
         line: "\\c {{ DB_APP_NAME }}"
         insertbefore: BOF
         
-    - name: Agregar instrucción \c al principio de 06-init-db.sql
+    - name: Agregar instruccion \c al principio de 06-init-db.sql
       ansible.builtin.lineinfile:
         path: "{{ DIST_PATH }}/06-init-db.sql"
         line: "\\c {{ DB_APP_NAME }}"
@@ -90,9 +90,9 @@
         dest: "{{ DIST_PATH }}/docker-compose.yml"
         mode: "0644"
     
-    - name: Verificar que los archivos de inicialización estén presentes
+    - name: Verificar que los archivos de inicializacion esten presentes
       ansible.builtin.debug:
-        msg: "Archivos de inicialización generados en {{ DIST_PATH }}"
+        msg: "Archivos de inicializacion generados en {{ DIST_PATH }}"
     
     - name: Compilar imagen de PostgreSQL con locales
       community.docker.docker_image:
@@ -103,7 +103,7 @@
         state: present
       register: postgres_image_build_result
     
-    - name: Verificar el resultado de la compilación de PostgreSQL
+    - name: Verificar el resultado de la compilacion de PostgreSQL
       ansible.builtin.debug:
         msg: "Imagen {{ POSTGRES_IMAGE_NAME }} construida. ID: {{ postgres_image_build_result.image.Id }}"
     
@@ -118,13 +118,28 @@
         name: "{{ IDENTITY_MANAGER_IMAGE_NAME }}"
         build:
           path: "{{ IDENTITY_MANAGER_PATH_BUILD }}"
+          args:
+            KEYCLOAK_URL: "{{ KEYCLOAK_URL }}"
         source: build
         state: present
       register: image_build_result
     
-    - name: Verificar el resultado de la compilación
+    - name: Verificar el resultado de la compilacion
       ansible.builtin.debug:
         msg: "Imagen {{ IDENTITY_MANAGER_IMAGE_NAME }} construida. ID: {{ image_build_result.image.Id }}"
+    
+    - name: Compilar imagen de Ansible Runner
+      community.docker.docker_image:
+        name: "{{ ANSIBLE_RUNNER_IMAGE_NAME }}"
+        build:
+          path: "{{ ANSIBLE_RUNNER_PATH_BUILD }}"
+        source: build
+        state: present
+      register: ansible_runner_image_build_result
+    
+    - name: Verificar el resultado de la compilacion
+      ansible.builtin.debug:
+        msg: "Imagen {{ ANSIBLE_RUNNER_IMAGE_NAME }} construida. ID: {{ ansible_runner_image_build_result.image.Id }}"
     
     - name: Copiar certificados
       ansible.builtin.copy:
@@ -138,3 +153,30 @@
         dest: "{{ DIST_PATH }}"
         mode: "0644"
     
+    - name: Copiar playbooks
+      ansible.builtin.copy:
+        src: "{{ PLAYBOOKS_PATH_BUILD }}"
+        dest: "{{ DIST_PATH }}"
+        mode: "0644"
+
+    - name: Generar vars.yml para ansible-runner
+      ansible.builtin.copy:
+        dest: "{{ DIST_PATH }}/playbooks/vars.yml"
+        content: |
+          KEYCLOAK_ADMIN: "{{ KEYCLOAK_ADMIN }}"
+          KEYCLOAK_ADMIN_PASSWORD: "{{ KEYCLOAK_ADMIN_PASSWORD }}"
+          KEYCLOAK_URL: "{{ KEYCLOAK_URL }}"
+          NEW_ADMIN_USERNAME: "{{ NEW_ADMIN_USERNAME }}"
+          NEW_ADMIN_EMAIL: "{{ NEW_ADMIN_EMAIL }}"
+          NEW_ADMIN_FIRST_NAME: "{{ NEW_ADMIN_FIRST_NAME }}"
+          NEW_ADMIN_LAST_NAME: "{{ NEW_ADMIN_LAST_NAME }}"
+          NEW_ADMIN_PASSWORD: "{{ NEW_ADMIN_PASSWORD }}"
+          APP_ADMIN_USERNAME: "{{ APP_ADMIN_USERNAME }}"
+          APP_ADMIN_EMAIL: "{{ APP_ADMIN_EMAIL }}"
+          APP_ADMIN_FIRST_NAME: "{{ APP_ADMIN_FIRST_NAME }}"
+          APP_ADMIN_LAST_NAME: "{{ APP_ADMIN_LAST_NAME }}"
+          APP_ADMIN_PASSWORD: "{{ APP_ADMIN_PASSWORD }}"
+          APP_REALM: "{{ APP_REALM }}"
+          APP_ADMIN_ROLE: "{{ APP_ADMIN_ROLE }}"
+          APP_ADMIN_CLIENT_ID: "{{ APP_ADMIN_CLIENT_ID }}"
+        mode: "0644"

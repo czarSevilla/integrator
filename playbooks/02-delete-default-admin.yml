@@ -1,0 +1,57 @@
+---
+- name: Crear usuario en Keycloak
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    # Delete default admin user
+    - name: Obtener token de acceso de Keycloak
+      ansible.builtin.uri:
+        url: "{{ KEYCLOAK_URL }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          client_id: "admin-cli"
+          username: "{{ NEW_ADMIN_USERNAME }}"
+          password: "{{ NEW_ADMIN_PASSWORD }}"
+          grant_type: "password"
+        status_code: 200
+      register: keycloak_token
+
+    - name: Extraer access_token
+      ansible.builtin.set_fact:
+        access_token: "{{ keycloak_token.json.access_token }}"
+    
+    - name: Obtener ID del usuario '{{ KEYCLOAK_ADMIN }}'
+      ansible.builtin.uri:
+        url: "{{ KEYCLOAK_URL }}/admin/realms/master/users?username={{ KEYCLOAK_ADMIN }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ access_token }}"
+        status_code: 200
+      register: user_info
+
+    - name: Extraer ID del usuario
+      ansible.builtin.set_fact:
+        user_id: "{{ user_info.json | selectattr('username', 'equalto', KEYCLOAK_ADMIN) | map(attribute='id') | first }}"
+      when: user_info.json | length > 0
+    
+    - name: Imprimir resultado de la busqueda del usuario "{{ KEYCLOAK_ADMIN }}"
+      ansible.builtin.debug:
+        var: user_id
+
+    - name: Eliminar el usuario '{{ KEYCLOAK_ADMIN }}'
+      ansible.builtin.uri:
+        url: "{{ KEYCLOAK_URL }}/admin/realms/master/users/{{ user_id }}"
+        method: DELETE
+        headers:
+          Authorization: "Bearer {{ access_token }}"
+        status_code: 204
+      when: user_id is defined and user_id != ""
+      register: delete_result
+
+    - name: Mostrar resultado de la eliminación
+      ansible.builtin.debug:
+        msg: "Usuario '{{ KEYCLOAK_ADMIN }}' eliminado exitosamente."
+      when: delete_result is defined and delete_result.status == 204

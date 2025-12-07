@@ -1,0 +1,81 @@
+---
+- name: Crear usuario en Keycloak
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Obtener token de acceso de Keycloak
+      ansible.builtin.uri:
+        url: "{{ KEYCLOAK_URL }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          client_id: "admin-cli"
+          username: "{{ KEYCLOAK_ADMIN }}"
+          password: "{{ KEYCLOAK_ADMIN_PASSWORD }}"
+          grant_type: "password"
+        status_code: 200
+      register: keycloak_token
+
+    - name: Extraer access_token
+      ansible.builtin.set_fact:
+        access_token: "{{ keycloak_token.json.access_token }}"
+    
+    - name: Imprimir el token"
+      ansible.builtin.debug:
+        var: access_token
+
+    - name: Asegurar que el usuario existe en Keycloak
+      community.general.keycloak_user:
+        auth_keycloak_url: "{{ KEYCLOAK_URL }}"
+        token: "{{ access_token }}"
+        username: "{{ NEW_ADMIN_USERNAME }}"
+        email: "{{ NEW_ADMIN_EMAIL }}"
+        emailVerified: true
+        enabled: true
+        firstName: "{{ NEW_ADMIN_FIRST_NAME }}"
+        lastName: "{{ NEW_ADMIN_LAST_NAME }}"
+        credentials:
+          - type: password
+            value: "{{ NEW_ADMIN_PASSWORD }}"
+            temporary: false
+        state: present
+    
+    - name: Verificar si el usuario '{{ NEW_ADMIN_USERNAME }}' existe
+      community.general.keycloak_user:
+        token: "{{ access_token }}"
+        auth_keycloak_url: "{{ KEYCLOAK_URL }}"
+        username: "{{ NEW_ADMIN_USERNAME }}"
+      register: user_info
+
+    - name: Imprimir resultado de la busqueda del usuario "{{ NEW_ADMIN_USERNAME }}"
+      ansible.builtin.debug:
+        var: user_info.existing.id
+    
+    - name: Obtener ID del rol "admin"
+      community.general.keycloak_role:
+        token: "{{ access_token }}"
+        auth_keycloak_url: "{{ KEYCLOAK_URL }}"
+        realm: "master"
+        name: "admin"
+      register: admin_role_info
+    
+    - name: Imprimir resultado de la busqueda del rol "admin"
+      ansible.builtin.debug:
+        var: admin_role_info.existing.id
+    
+    - name: Asignar el rol 'admin' al usuario '{{ NEW_ADMIN_USERNAME }}'
+      ansible.builtin.uri:
+        url: "{{ KEYCLOAK_URL }}/admin/realms/master/users/{{ user_info.existing.id }}/role-mappings/realm"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Bearer {{ access_token }}"
+        body_format: json
+        body:
+          - id: "{{ admin_role_info.existing.id }}"
+            name: "admin"
+        status_code: 204
+    
+    
