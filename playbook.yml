@@ -179,4 +179,6 @@
           APP_REALM: "{{ APP_REALM }}"
           APP_ADMIN_ROLE: "{{ APP_ADMIN_ROLE }}"
           APP_ADMIN_CLIENT_ID: "{{ APP_ADMIN_CLIENT_ID }}"
+          REALM_ADMIN_ROLE: "{{ REALM_ADMIN_ROLE }}"
+          REALM_ADMIN_CLIENT_ID: "{{ REALM_ADMIN_CLIENT_ID }}"
         mode: "0644"

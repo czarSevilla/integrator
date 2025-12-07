@@ -44,6 +44,7 @@
       community.general.keycloak_user:
         auth_keycloak_url: "{{ KEYCLOAK_URL }}"
         token: "{{ access_token }}"
+        realm: "{{ APP_REALM }}"
         username: "{{ APP_ADMIN_USERNAME }}"
       register: user_info
 
@@ -88,3 +89,42 @@
           - id: "{{ admin_app_role_info.existing.id }}"
             name: "{{ APP_ADMIN_ROLE }}"
         status_code: 204
+
+    - name: Obtener ID del rol "{{ REALM_ADMIN_ROLE }}"
+      community.general.keycloak_role:
+        auth_keycloak_url: "{{ KEYCLOAK_URL }}"
+        token: "{{ access_token }}"
+        realm: "{{ APP_REALM }}"
+        client_id: "{{ REALM_ADMIN_CLIENT_ID }}"
+        name: "{{ REALM_ADMIN_ROLE }}"
+      register: admin_app_role_info
+    
+    - name: Imprimir resultado de la busqueda del rol "{{ REALM_ADMIN_ROLE }}"
+      ansible.builtin.debug:
+        var: admin_app_role_info.existing.id
+    
+    - name: Obtener información del cliente de Keycloak
+      community.general.keycloak_client:
+        auth_keycloak_url: "{{ KEYCLOAK_URL }}"
+        token: "{{ access_token }}"
+        realm: "{{ APP_REALM }}"
+        client_id: "{{ REALM_ADMIN_CLIENT_ID }}"
+      register: app_client_info
+
+    - name: Mostrar el ID del cliente
+      debug:
+        msg: "El ID del cliente '{{ REALM_ADMIN_CLIENT_ID }}' es: {{ app_client_info.existing.id }}"
+    
+    - name: Asignar el rol '{{ REALM_ADMIN_ROLE }}' al usuario '{{ APP_ADMIN_USERNAME }}'
+      ansible.builtin.uri:
+        url: "{{ KEYCLOAK_URL }}/admin/realms/{{ APP_REALM }}/users/{{ app_user_result.end_state.id }}/role-mappings/clients/{{ app_client_info.existing.id }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Bearer {{ access_token }}"
+        body_format: json
+        body:
+          - id: "{{ admin_app_role_info.existing.id }}"
+            name: "{{ REALM_ADMIN_ROLE }}"
+        status_code: 204
+
