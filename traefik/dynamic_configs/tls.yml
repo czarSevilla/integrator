@@ -1,3 +1,4 @@
+# Configuracion de TLS para el reverse proxy
 tls:
   certificates:
     - certFile: /etc/certs/sso.cesarsevilla.live.crt
@@ -5,6 +6,7 @@ tls:
     - certFile: /etc/certs/app.cesarsevilla.live.crt
       keyFile: /etc/certs/app.cesarsevilla.live.key
 
+# Configuracion de HTTP para el reverse proxy
 http:
   middlewares:
     keycloak-headers:

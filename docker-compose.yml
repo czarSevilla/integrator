@@ -29,6 +29,7 @@ services:
     networks:
       - app-network
 
+  # Servicio de la base de datos
   db:
     container_name: app-db
     image: {{ POSTGRES_IMAGE_NAME }}
@@ -63,6 +64,7 @@ services:
     networks:
       - app-network
 
+  # Servicio del identity manager
   keycloak:
     container_name: app-identity-manager
     image: {{ IDENTITY_MANAGER_IMAGE_NAME }}
@@ -99,6 +101,7 @@ services:
     networks:
       - app-network
 
+  # Servicio del reverse proxy
   traefik:
     container_name: app-reverse-proxy
     image: traefik:v2.11
@@ -136,6 +139,7 @@ services:
           - {{ KEYCLOAK_DOMAIN }}
           - {{ APP_DOMAIN }}
   
+  # Servicio de creacion del administrador final del SSO
   ansible-01-new-admin:
     container_name: ansible-01-new-admin
     image: {{ ANSIBLE_RUNNER_IMAGE_NAME }}
@@ -151,6 +155,7 @@ services:
       traefik:
         condition: service_healthy
   
+  # Servicio de eliminacion del administrador por defecto
   ansible-02-delete-default-admin:
     container_name: ansible-02-delete-default-admin
     image: {{ ANSIBLE_RUNNER_IMAGE_NAME }}
@@ -164,6 +169,7 @@ services:
       ansible-01-new-admin:
         condition: service_completed_successfully
   
+  # Servicio de creacion del usuario de la aplicacion
   ansible-03-app-user:
     container_name: ansible-03-app-user
     image: {{ ANSIBLE_RUNNER_IMAGE_NAME }}
@@ -177,6 +183,7 @@ services:
       ansible-02-delete-default-admin:
         condition: service_completed_successfully
   
+  # Servicio del backend
   app-backend:
     container_name: app-backend
     image: {{ APP_BACKEND_IMAGE_NAME }}
@@ -207,6 +214,7 @@ services:
       retries: 5
       start_period: 120s
 
+  # Servicio del frontend
   app-frontend:
     container_name: app-frontend
     image: {{ APP_FRONTEND_IMAGE_NAME }}
@@ -233,11 +241,13 @@ services:
       retries: 5
       start_period: 120s
 
+# Volumes persistentes
 volumes:
   psql-db-data:
   app-db-data:
   keycloak-db-data:
   app-identity-manager-data:
 
+# Redes
 networks:
   app-network:

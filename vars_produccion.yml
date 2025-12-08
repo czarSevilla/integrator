@@ -1,52 +1,157 @@
+# Variables de configuracion para la generacion de imagenes
+
+# Ubicacion de la carpeta de dist donde se generan los archivos de configuracion para el despliegue
 DIST_PATH: "dist"
+
+# Nombre de la imagen de la base de datos
 POSTGRES_IMAGE_NAME: "app-db:1.0.0"
+
+# Ubicacion de la carpeta de build de la base de datos
 DB_POSTGRES_PATH_BUILD: "database"
+
+# Password de la base de datos de root
 DB_ROOT_PASSWORD: "psql.Pwd.1125"
+
+# Usuario de la base de datos de root
 DB_ROOT_USER: "psadminbd"
+
+# Nombre de la base de datos
 DB_NAME: "postgres"
+
+# Zona horaria
 TIMEZONE: "America/Mexico_City"
+
+# Ubicacion de la carpeta de tablespace de la base de datos de keycloak
 DB_KEYCLOAK_TABLESPACE_LOCATION: "/var/lib/postgresql/ts/keycloak"
+
+# Usuario de la base de datos de keycloak
 DB_KEYCLOAK_USER: "pskeycloakapp"
+
+# Password de la base de datos de keycloak
 DB_KEYCLOAK_PASSWORD: "We4v1le.ex"
+
+# Nombre de la base de datos de keycloak
 DB_KEYCLOAK_NAME: "keycloakdb"
+
+# Ubicacion de la carpeta de tablespace de la base de datos de app
 DB_APP_TABLESPACE_LOCATION: "/var/lib/postgresql/ts/possatdb"
+
+# Usuario de la base de datos de app
 DB_APP_USER: "psbackendapp"
+
+# Password de la base de datos de app
 DB_APP_PASSWORD: "Backend123"
+
+# Nombre de la base de datos de app
 DB_APP_NAME: "possatdb"
+
+# Ubicacion de la carpeta de scripts de inicializacion de la base de datos
 DB_INIT_DB_SQL_PATH: "/Users/czarsevilla/ps-desarrollo/ps-backend/ps-database"
+
+# Nombre de la imagen de keycloak (identity manager)
 IDENTITY_MANAGER_IMAGE_NAME: "app-identity-manager:1.0.0"
+
+# Ubicacion de la carpeta de build de keycloak (identity manager)
 IDENTITY_MANAGER_PATH_BUILD: "identity"
+
+# Ubicacion de la carpeta del tema de keycloak (identity manager)
 IDENTITY_MANAGER_THEME_SRC: "/Users/czarsevilla/ps-desarrollo/ps-frontend/theme-keycloak"
+
+# Usuario temporal de keycloak (identity manager)
 KEYCLOAK_ADMIN: "admin"
+
+# Password del usuario temporal de keycloak (identity manager)
 KEYCLOAK_ADMIN_PASSWORD: "D4rkr41.ex"
+
+# Ubicacion de la carpeta de build de la reverse proxy
 REVERSE_PROXY_PATH_BUILD: "traefik"
+
+# Nombre de la imagen de ansible runner
 ANSIBLE_RUNNER_IMAGE_NAME: "ansible-runner:1.0.0"
+
+# Ubicacion de la carpeta de build de ansible runner
 ANSIBLE_RUNNER_PATH_BUILD: "ansible-runner"
+
+# Dominio del SSO (identity manager)
 KEYCLOAK_DOMAIN: "sso.cesarsevilla.live"
+
+# URL del SSO (identity manager)
 KEYCLOAK_URL: "https://sso.cesarsevilla.live"
-NEW_ADMIN_USERNAME: "adminsso"
-NEW_ADMIN_EMAIL: "czar.sevilla@gmail.com"
-NEW_ADMIN_FIRST_NAME: "Cesar"
-NEW_ADMIN_LAST_NAME: "Sevilla"
-NEW_ADMIN_PASSWORD: "D4rkr41.ex"
-PLAYBOOKS_PATH_BUILD: "playbooks"
-APP_ADMIN_USERNAME: "cesar"
-APP_ADMIN_EMAIL: "czar.sevilla@gmail.com"
-APP_ADMIN_FIRST_NAME: "Cesar"
-APP_ADMIN_LAST_NAME: "Sevilla"
-APP_ADMIN_PASSWORD: "Luc4r10.ex"
-APP_REALM: "realm-ps-dev"
-APP_ADMIN_ROLE: "administrador"
-APP_ADMIN_CLIENT_ID: "client-ps-frontend-app"
-REALM_ADMIN_ROLE: "realm-admin"
-REALM_ADMIN_CLIENT_ID: "realm-management"
-APP_BACKEND_SRC_PATH: "/Users/czarsevilla/ps-desarrollo/ps-backend"
-APP_FRONTEND_SRC_PATH: "/Users/czarsevilla/ps-desarrollo/ps-frontend"
-BACKEND_PATH_BUILD: "backend"
-FRONTEND_PATH_BUILD: "frontend"
-BACKEND_PROJECT_NAME: "ps-backend-app"
-FRONTEND_PROJECT_NAME: "ps-frontend-app"
-APP_BACKEND_IMAGE_NAME: "app-backend:1.0.0"
-APP_FRONTEND_IMAGE_NAME: "app-frontend:1.0.0"
-APP_URL: "https://app.cesarsevilla.live"
+
+# Dominio de la aplicacion de frontend
 APP_DOMAIN: "app.cesarsevilla.live"
+
+# URL de la aplicacion de frontend
+APP_URL: "https://app.cesarsevilla.live"
+
+# Usuario final del SSO (identity manager)
+NEW_ADMIN_USERNAME: "adminsso"
+
+# Email del usuario final del SSO (identity manager)
+NEW_ADMIN_EMAIL: "czar.sevilla@gmail.com"
+
+# Nombre del usuario final del SSO (identity manager)
+NEW_ADMIN_FIRST_NAME: "Cesar"
+
+# Apellido del usuario final del SSO (identity manager)
+NEW_ADMIN_LAST_NAME: "Sevilla"
+
+# Password del usuario final del SSO (identity manager)
+NEW_ADMIN_PASSWORD: "D4rkr41.ex"
+
+# Ubicacion de la carpeta de build de playbooks
+PLAYBOOKS_PATH_BUILD: "playbooks"
+
+# Usuario de la aplicacion de frontend
+APP_ADMIN_USERNAME: "cesar"
+
+# Email del usuario de la aplicacion de frontend
+APP_ADMIN_EMAIL: "czar.sevilla@gmail.com"
+
+# Nombre del usuario de la aplicacion de frontend
+APP_ADMIN_FIRST_NAME: "Cesar"
+
+# Apellido del usuario de la aplicacion de frontend
+APP_ADMIN_LAST_NAME: "Sevilla"
+
+# Password del usuario de la aplicacion de frontend
+APP_ADMIN_PASSWORD: "Luc4r10.ex"
+
+# Nombre del realm de la aplicacion de frontend
+APP_REALM: "realm-ps-dev"
+
+# Rol del usuario de la aplicacion de frontend
+APP_ADMIN_ROLE: "administrador"
+
+# ID del cliente de la aplicacion de frontend
+APP_ADMIN_CLIENT_ID: "client-ps-frontend-app"
+
+# Rol del realm de la aplicacion de frontend
+REALM_ADMIN_ROLE: "realm-admin"
+
+# ID del cliente del realm de la aplicacion de frontend
+REALM_ADMIN_CLIENT_ID: "realm-management"
+
+# Ubicacion de la carpeta origen de los fuentes del backend
+APP_BACKEND_SRC_PATH: "/Users/czarsevilla/ps-desarrollo/ps-backend"
+
+# Ubicacion de la carpeta origen de los fuentes del frontend
+APP_FRONTEND_SRC_PATH: "/Users/czarsevilla/ps-desarrollo/ps-frontend"
+
+# Ubicacion de la carpeta de build del backend
+BACKEND_PATH_BUILD: "backend"
+
+# Ubicacion de la carpeta de build del frontend
+FRONTEND_PATH_BUILD: "frontend"
+
+# Nombre del proyecto del backend
+BACKEND_PROJECT_NAME: "ps-backend-app"
+
+# Nombre del proyecto del frontend
+FRONTEND_PROJECT_NAME: "ps-frontend-app"
+
+# Nombre de la imagen del backend
+APP_BACKEND_IMAGE_NAME: "app-backend:1.0.0"
+
+# Nombre de la imagen del frontend
+APP_FRONTEND_IMAGE_NAME: "app-frontend:1.0.0"
