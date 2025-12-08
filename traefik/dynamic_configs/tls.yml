@@ -2,6 +2,8 @@ tls:
   certificates:
     - certFile: /etc/certs/sso.cesarsevilla.live.crt
       keyFile: /etc/certs/sso.cesarsevilla.live.key
+    - certFile: /etc/certs/app.cesarsevilla.live.crt
+      keyFile: /etc/certs/app.cesarsevilla.live.key
 
 http:
   middlewares:
@@ -14,3 +16,21 @@ http:
         customRequestHeaders:
           X-Forwarded-Proto: "https"
           X-Forwarded-Host: "sso.cesarsevilla.live"
+    app-backend-headers:
+      headers:
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+        sslProxyHeaders:
+          X-Forwarded-Proto: "https"
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Host: "app.cesarsevilla.live"
+    app-frontend-headers:
+      headers:
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+        sslProxyHeaders:
+          X-Forwarded-Proto: "https"
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Host: "app.cesarsevilla.live"

@@ -182,3 +182,105 @@
           REALM_ADMIN_ROLE: "{{ REALM_ADMIN_ROLE }}"
           REALM_ADMIN_CLIENT_ID: "{{ REALM_ADMIN_CLIENT_ID }}"
         mode: "0644"
+
+    - name: Verificar si existe el directorio de build del backend
+      ansible.builtin.stat:
+        path: "{{ BACKEND_PATH_BUILD }}/{{ BACKEND_PROJECT_NAME }}"
+      register: backend_build_dir
+
+    - name: Borrar directorio de build del backend si existe
+      ansible.builtin.file:
+        path: "{{ BACKEND_PATH_BUILD }}/{{ BACKEND_PROJECT_NAME }}"
+        state: absent
+      when: backend_build_dir.stat.exists
+    
+    - name: Copiar directorio del backend al path de build
+      ansible.builtin.copy:
+        src: "{{ APP_BACKEND_SRC_PATH }}/{{ BACKEND_PROJECT_NAME }}"
+        dest: "{{ BACKEND_PATH_BUILD }}"
+        mode: "0755"
+    
+    - name: Parametrizar properties del backend
+      ansible.builtin.template:
+        src: "{{ BACKEND_PATH_BUILD }}/application.properties"
+        dest: "{{ BACKEND_PATH_BUILD }}/{{ BACKEND_PROJECT_NAME }}/src/main/resources/application.properties"
+        mode: "0644"
+    
+    - name: Parametrizar CorsConfig.java del backend
+      ansible.builtin.template:
+        src: "{{ BACKEND_PATH_BUILD }}/CorsConfig.java"
+        dest: "{{ BACKEND_PATH_BUILD }}/{{ BACKEND_PROJECT_NAME }}/src/main/java/mx/posicionsatelital/backend/config/CorsConfig.java"
+        mode: "0644"
+    
+    - name: Parametrizar Dockerfile del backend
+      ansible.builtin.template:
+        src: "{{ BACKEND_PATH_BUILD }}/Dockerfile"
+        dest: "{{ BACKEND_PATH_BUILD }}/{{ BACKEND_PROJECT_NAME }}/Dockerfile"
+        mode: "0644"
+    
+    - name: Compilar imagen del backend
+      community.docker.docker_image:
+        name: "{{ APP_BACKEND_IMAGE_NAME }}"
+        build:
+          path: "{{ BACKEND_PATH_BUILD }}/{{ BACKEND_PROJECT_NAME }}"
+        source: build
+        state: present
+      register: backend_image_build_result
+    
+    - name: Verificar el resultado de la compilacion
+      ansible.builtin.debug:
+        msg: "Imagen {{ APP_BACKEND_IMAGE_NAME }} construida. ID: {{ backend_image_build_result.image.Id }}"  
+    
+    - name: Verificar si existe el directorio de build del frontend
+      ansible.builtin.stat:
+        path: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}"
+      register: frontend_build_dir
+
+    - name: Borrar directorio de build del frontend si existe
+      ansible.builtin.file:
+        path: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}"
+        state: absent
+      when: frontend_build_dir.stat.exists
+
+    - name: Copiar directorio del frontend al path de build
+      ansible.builtin.copy:
+        src: "{{ APP_FRONTEND_SRC_PATH }}/{{ FRONTEND_PROJECT_NAME }}"
+        dest: "{{ FRONTEND_PATH_BUILD }}"
+        mode: "0755"
+    
+    - name: Parametrizar Dockerfile del frontend
+      ansible.builtin.template:
+        src: "{{ FRONTEND_PATH_BUILD }}/Dockerfile"
+        dest: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}/Dockerfile"
+        mode: "0644"
+    
+    - name: Copiar .dockerignore del frontend
+      ansible.builtin.copy:
+        src: "{{ FRONTEND_PATH_BUILD }}/.dockerignore"
+        dest: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}/.dockerignore"
+        mode: "0644"
+    
+    - name: Parametrizar environments.ts del frontend
+      ansible.builtin.template:
+        src: "{{ FRONTEND_PATH_BUILD }}/environments.ts"
+        dest: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}/src/environments.ts"
+        mode: "0644"
+    
+    - name: Parametrizar nginx.conf del frontend
+      ansible.builtin.template:
+        src: "{{ FRONTEND_PATH_BUILD }}/nginx.conf"
+        dest: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}/nginx.conf"
+        mode: "0644"
+    
+    - name: Compilar imagen del frontend
+      community.docker.docker_image:
+        name: "{{ APP_FRONTEND_IMAGE_NAME }}"
+        build:
+          path: "{{ FRONTEND_PATH_BUILD }}/{{ FRONTEND_PROJECT_NAME }}"
+        source: build
+        state: present
+      register: frontend_image_build_result
+    
+    - name: Verificar el resultado de la compilacion
+      ansible.builtin.debug:
+        msg: "Imagen {{ APP_FRONTEND_IMAGE_NAME }} construida. ID: {{ frontend_image_build_result.image.Id }}"

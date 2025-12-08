@@ -106,3 +106,43 @@ https://certbot.eff.org/instructions?ws=nginx&os=pip
 Para agregar nuevos scripts de inicializacion de base de datos
 1. Agregar el script en el playbook.yml
 2. Agregar el script en el docker-compose.yml en la definicion del servicio db
+
+
+Para que la imagen del frontend compilara en modo productivo
+se ajusto el archivo ps-frontend-app/angular.json
+
+```bash
+diff --git a/ps-frontend-app/angular.json b/ps-frontend-app/angular.json
+index 5b1c0c1..c305415 100644
+--- a/ps-frontend-app/angular.json
++++ b/ps-frontend-app/angular.json
+@@ -39,13 +39,13 @@
+               "budgets": [
+                 {
+                   "type": "initial",
+-                  "maximumWarning": "500kB",
+-                  "maximumError": "1MB"
++                  "maximumWarning": "2MB",
++                  "maximumError": "3MB"
+                 },
+                 {
+                   "type": "anyComponentStyle",
+-                  "maximumWarning": "4kB",
+-                  "maximumError": "8kB"
++                  "maximumWarning": "6kB",
++                  "maximumError": "10kB"
+                 }
+               ],
+               "outputHashing": "all"
+@@ -94,5 +94,8 @@
+         }
+       }
+     }
++  },
++  "cli": {
++    "analytics": false
+   }
+ }
+```
+
+ps-backend-app/src/main/java/mx/posicionsatelital/backend/config/CorsConfig.java
