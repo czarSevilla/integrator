@@ -1,0 +1,44 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist
+tmp
+out-tsc
+bazel-out
+
+# IDE
+.idea
+.vscode
+*.launch
+.settings
+*.sublime-workspace
+
+# Testing
+coverage
+.angular/cache
+.sass-cache
+connect.lock
+testem.log
+typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# E2E tests
+e2e
+
+# Docker files (evitar copiar el mismo Dockerfile)
+Dockerfile
+.dockerignore
