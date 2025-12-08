@@ -769,7 +769,7 @@
       "redirectUris": [
         "http://localhost:8080/*",
         "http://localhost:4200/*",
-        "https://app.cesarsevilla.live"
+        "https://app.cesarsevilla.live/*"
       ],
       "webOrigins": [
         "*"
