@@ -1,2 +1,0 @@
-org.springframework.test.context.ContextCustomizerFactory = \
-    live.czarsevilla.config.SqlTestContainersSpringContextCustomizerFactory
