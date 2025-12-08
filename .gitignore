@@ -1,5 +1,4 @@
 .vscode/
-lab1/
 venv/
 dist/
 traefik/certs/
