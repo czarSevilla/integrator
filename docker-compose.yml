@@ -89,6 +89,7 @@ services:
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.rule=Host(`{{ KEYCLOAK_DOMAIN}}`)"
       - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
       - "traefik.http.routers.keycloak.service=keycloak"
       - "traefik.http.routers.keycloak.middlewares=keycloak-headers@file"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
@@ -113,8 +114,16 @@ services:
       - --api.insecure=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls=true
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --certificatesresolvers.letsencrypt.acme.email={{ LETSENCRYPT_EMAIL }}
+      - --certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.preferredchain=
       - --providers.file.directory=/etc/traefik/dynamic_configs
       - --providers.file.watch=true
       - --log.level=DEBUG
@@ -127,6 +136,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dynamic_configs:/etc/traefik/dynamic_configs:ro
       - ./certs:/etc/certs:ro
+      - traefik-acme-data:/etc/traefik/acme
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/rawdata"]
       interval: 10s
@@ -204,6 +214,7 @@ services:
       - "traefik.http.routers.app-backend.entrypoints=websecure"
       - "traefik.http.routers.app-backend.rule=Host(`{{ APP_DOMAIN }}`) && PathPrefix(`/api/v1`)"
       - "traefik.http.routers.app-backend.tls=true"
+      - "traefik.http.routers.app-backend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.app-backend.service=app-backend"
       - "traefik.http.routers.app-backend.middlewares=app-backend-headers@file"
       - "traefik.http.services.app-backend.loadbalancer.server.port=8080"
@@ -231,6 +242,7 @@ services:
       - "traefik.http.routers.app-frontend.entrypoints=websecure"
       - "traefik.http.routers.app-frontend.rule=Host(`{{ APP_DOMAIN }}`)"
       - "traefik.http.routers.app-frontend.tls=true"
+      - "traefik.http.routers.app-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.app-frontend.service=app-frontend"
       - "traefik.http.routers.app-frontend.middlewares=app-frontend-headers@file"
       - "traefik.http.services.app-frontend.loadbalancer.server.port=80"
@@ -247,6 +259,7 @@ volumes:
   app-db-data:
   keycloak-db-data:
   app-identity-manager-data:
+  traefik-acme-data:
 
 # Redes
 networks:

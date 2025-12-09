@@ -108,6 +108,9 @@ APP_ADMIN_USERNAME: "cesar"
 # Email del usuario de la aplicacion de frontend
 APP_ADMIN_EMAIL: "czar.sevilla@gmail.com"
 
+# Email para Let's Encrypt (notificaciones de certificados)
+LETSENCRYPT_EMAIL: "czar.sevilla@gmail.com"
+
 # Nombre del usuario de la aplicacion de frontend
 APP_ADMIN_FIRST_NAME: "Cesar"
 
