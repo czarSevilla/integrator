@@ -284,3 +284,44 @@
     - name: Verificar el resultado de la compilacion
       ansible.builtin.debug:
         msg: "Imagen {{ APP_FRONTEND_IMAGE_NAME }} construida. ID: {{ frontend_image_build_result.image.Id }}"
+    
+    - name: Crear directorio para imagenes Docker empaquetadas
+      ansible.builtin.file:
+        path: "{{ DIST_PATH }}/docker-images"
+        state: directory
+        mode: "0755"
+    
+    - name: Empaquetar imagen de PostgreSQL
+      ansible.builtin.command:
+        cmd: "docker save {{ POSTGRES_IMAGE_NAME }} -o {{ DIST_PATH }}/docker-images/{{ POSTGRES_IMAGE_NAME | replace(':', '_') }}.tar"
+      register: save_postgres
+      changed_when: save_postgres.rc == 0
+    
+    - name: Empaquetar imagen de Identity Manager
+      ansible.builtin.command:
+        cmd: "docker save {{ IDENTITY_MANAGER_IMAGE_NAME }} -o {{ DIST_PATH }}/docker-images/{{ IDENTITY_MANAGER_IMAGE_NAME | replace(':', '_') }}.tar"
+      register: save_identity
+      changed_when: save_identity.rc == 0
+    
+    - name: Empaquetar imagen de Ansible Runner
+      ansible.builtin.command:
+        cmd: "docker save {{ ANSIBLE_RUNNER_IMAGE_NAME }} -o {{ DIST_PATH }}/docker-images/{{ ANSIBLE_RUNNER_IMAGE_NAME | replace(':', '_') }}.tar"
+      register: save_ansible
+      changed_when: save_ansible.rc == 0
+    
+    - name: Empaquetar imagen del Backend
+      ansible.builtin.command:
+        cmd: "docker save {{ APP_BACKEND_IMAGE_NAME }} -o {{ DIST_PATH }}/docker-images/{{ APP_BACKEND_IMAGE_NAME | replace(':', '_') }}.tar"
+      register: save_backend
+      changed_when: save_backend.rc == 0
+    
+    - name: Empaquetar imagen del Frontend
+      ansible.builtin.command:
+        cmd: "docker save {{ APP_FRONTEND_IMAGE_NAME }} -o {{ DIST_PATH }}/docker-images/{{ APP_FRONTEND_IMAGE_NAME | replace(':', '_') }}.tar"
+      register: save_frontend
+      changed_when: save_frontend.rc == 0
+    
+    - name: Verificar que las imagenes fueron empaquetadas
+      ansible.builtin.debug:
+        msg: "Imagenes Docker empaquetadas en {{ DIST_PATH }}/docker-images"
+

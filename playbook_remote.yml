@@ -1,0 +1,131 @@
+---
+# Play separado para desplegar archivos al servidor remoto
+- name: Desplegar archivos de dist al servidor remoto
+  hosts: remote_servers
+  gather_facts: no
+  become: "{{ remote_become | default(false) }}"
+  vars_files:
+    - vars_produccion.yml
+  
+  tasks:
+    - name: Verificar que el directorio destino existe
+      ansible.builtin.file:
+        path: "{{ remote_dest_path | default('/tmp/dist') }}"
+        state: directory
+        mode: "0755"
+    
+    - name: Verificar que la clave SSH existe
+      ansible.builtin.stat:
+        path: "{{ ansible_ssh_private_key_file }}"
+      register: ssh_key_stat
+      when: ansible_ssh_private_key_file is defined
+      delegate_to: localhost
+    
+    - name: Verificar que la clave SSH existe
+      ansible.builtin.assert:
+        that:
+          - ssh_key_stat.stat.exists
+        fail_msg: "La clave SSH no existe en la ruta especificada: {{ ansible_ssh_private_key_file }}"
+        success_msg: "La clave SSH existe: {{ ansible_ssh_private_key_file }}"
+      when: ansible_ssh_private_key_file is defined
+      delegate_to: localhost
+    
+    - name: Debug - Verificar variables de conexion
+      ansible.builtin.debug:
+        msg:
+          - "ansible_host: {{ ansible_host }}"
+          - "ansible_user: {{ ansible_user }}"
+          - "ansible_port: {{ ansible_port | default('NO DEFINIDO') }}"
+          - "ansible_ssh_private_key_file: {{ ansible_ssh_private_key_file | default('NO DEFINIDO') }}"
+    
+    - name: Construir opciones SSH para rsync
+      ansible.builtin.set_fact:
+        ssh_opts_parts:
+          - "-o"
+          - "StrictHostKeyChecking=no"
+          - "-o"
+          - "UserKnownHostsFile=/dev/null"
+    
+    - name: Agregar puerto SSH a opciones
+      ansible.builtin.set_fact:
+        ssh_opts_parts: "{{ ssh_opts_parts + ['-p', ansible_port | string] }}"
+      when: ansible_port is defined and ansible_port | int > 0
+    
+    - name: Agregar clave SSH privada a opciones
+      ansible.builtin.set_fact:
+        ssh_opts_parts: "{{ ssh_opts_parts + ['-i', ansible_ssh_private_key_file] }}"
+      when: ansible_ssh_private_key_file is defined
+    
+    - name: Construir comando SSH completo para rsync
+      ansible.builtin.set_fact:
+        ssh_cmd_string: "ssh {{ ssh_opts_parts | join(' ') }}"
+    
+    - name: Debug - Mostrar comando SSH construido
+      ansible.builtin.debug:
+        var: ssh_cmd_string
+    
+    - name: Copiar archivos de dist al servidor remoto usando rsync
+      ansible.builtin.command:
+        cmd: >
+          rsync
+          -avz
+          -e "{{ ssh_cmd_string }}"
+          {{ DIST_PATH }}/
+          {{ ansible_user }}@{{ ansible_host }}:{{ remote_dest_path | default('/tmp/dist') }}/
+      delegate_to: localhost
+      register: rsync_result
+      changed_when: rsync_result.rc == 0
+      failed_when: rsync_result.rc != 0
+    
+    - name: Verificar que Docker esta instalado en el servidor remoto
+      ansible.builtin.command:
+        cmd: docker --version
+      register: docker_version
+      changed_when: false
+      failed_when: docker_version.rc != 0
+    
+    - name: Verificar que Docker Compose esta instalado en el servidor remoto
+      ansible.builtin.command:
+        cmd: docker compose version
+      register: docker_compose_version
+      changed_when: false
+      failed_when: docker_compose_version.rc != 0
+    
+    - name: Definir lista de imagenes Docker a cargar
+      ansible.builtin.set_fact:
+        docker_images:
+          - "{{ POSTGRES_IMAGE_NAME }}"
+          - "{{ IDENTITY_MANAGER_IMAGE_NAME }}"
+          - "{{ ANSIBLE_RUNNER_IMAGE_NAME }}"
+          - "{{ APP_BACKEND_IMAGE_NAME }}"
+          - "{{ APP_FRONTEND_IMAGE_NAME }}"
+    
+    - name: Cargar imagenes Docker en el servidor remoto
+      ansible.builtin.command:
+        cmd: "docker load -i {{ remote_dest_path | default('/tmp/dist') }}/docker-images/{{ item | replace(':', '_') }}.tar"
+      loop: "{{ docker_images }}"
+      register: load_images
+      changed_when: load_images.rc == 0
+      failed_when: load_images.rc != 0
+    
+    - name: Verificar que las imagenes fueron cargadas
+      ansible.builtin.debug:
+        msg: "Todas las imagenes Docker han sido cargadas en el servidor remoto"
+    
+    - name: Ejecutar docker compose up -d en el servidor remoto
+      ansible.builtin.command:
+        cmd: "docker compose up -d"
+        chdir: "{{ remote_dest_path | default('/tmp/dist') }}"
+      register: docker_compose_up
+      changed_when: docker_compose_up.rc == 0
+    
+    - name: Verificar estado de los contenedores
+      ansible.builtin.command:
+        cmd: "docker compose ps"
+        chdir: "{{ remote_dest_path | default('/tmp/dist') }}"
+      register: docker_compose_ps
+      changed_when: false
+    
+    - name: Mostrar estado de los contenedores
+      ansible.builtin.debug:
+        var: docker_compose_ps.stdout_lines
